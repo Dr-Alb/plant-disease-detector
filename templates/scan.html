@@ -1,10 +1,116 @@
-{% extends "layout.html" %}
-{% block content %}
-<div class="scan-card">
-    <h2>Scan Your Plant</h2>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="image" accept="image/*" required><br>
-        <button type="submit">Upload</button>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan | Disease Detector</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            color: white;
+            background-color: #28a745;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        #preview {
+            max-width: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>📸 Scan Leaf for Disease</h2>
+
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required />
+        <br>
+        <input type="text" name="location" placeholder="Enter location (optional)">
+        <br>
+        <button class="btn" type="submit">Upload Photo</button>
     </form>
-</div>
-{% endblock %}
+
+    <hr>
+
+    <button class="btn" onclick="startCamera()">Take Photo</button>
+
+    <div id="cameraArea" class="hidden">
+        <video id="video" width="320" height="240" autoplay></video><br>
+        <button class="btn" onclick="capturePhoto()">📸 Capture</button>
+        <canvas id="canvas" width="320" height="240" class="hidden"></canvas>
+        <form id="cameraForm" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="location" id="gpsLocation">
+            <input type="file" name="image" id="capturedImage" hidden>
+        </form>
+    </div>
+
+    {% if disease %}
+        <hr>
+        <h3>🧠 Predicted: {{ disease }}</h3>
+        <p>💡 Solution: {{ solution }}</p>
+        <img src="{{ url_for('static', filename='uploads/' + image_file) }}" id="preview">
+    {% endif %}
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const cameraArea = document.getElementById('cameraArea');
+        const cameraForm = document.getElementById('cameraForm');
+
+        function startCamera() {
+            cameraArea.classList.remove('hidden');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    video.srcObject = stream;
+                })
+                .catch((err) => {
+                    alert("Camera access denied: " + err);
+                });
+        }
+
+        function capturePhoto() {
+            canvas.classList.remove('hidden');
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to blob
+            canvas.toBlob((blob) => {
+                const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+                const formData = new FormData();
+                formData.append("image", file);
+
+                // Optional: get location
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const coords = `${position.coords.latitude},${position.coords.longitude}`;
+                        formData.append("location", coords);
+                        submitForm(formData);
+                    },
+                    () => {
+                        formData.append("location", "Unknown");
+                        submitForm(formData);
+                    }
+                );
+            }, 'image/jpeg');
+        }
+
+        function submitForm(formData) {
+            fetch("/scan", {
+                method: "POST",
+                body: formData
+            }).then(res => res.text()).then((html) => {
+                document.open();
+                document.write(html);
+                document.close();
+            });
+        }
+    </script>
+</body>
+</html>

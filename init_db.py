@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS scans (
     location TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )
+               ALTER TABLE scans ADD COLUMN disease_name TEXT;
+ALTER TABLE scans ADD COLUMN solution TEXT;
+
 """)
 
 # Alerts table

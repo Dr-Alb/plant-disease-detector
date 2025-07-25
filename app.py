@@ -23,10 +23,183 @@ TWILIO_TOKEN = "your_twilio_token"
 TWILIO_FROM = "your_twilio_number"
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Load your TFLite model (to be added later)
+# Load TFLite model
 MODEL_PATH = "model.tflite"
 interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
+
+# Class labels and solution map
+CLASS_NAMES = [
+    'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
+    'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
+    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_',
+    'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy', 'Grape___Black_rot',
+    'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy',
+    'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy',
+    'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 'Potato___Early_blight',
+    'Potato___Late_blight', 'Potato___healthy', 'Raspberry___healthy', 'Soybean___healthy',
+    'Squash___Powdery_mildew', 'Strawberry___Leaf_scorch', 'Strawberry___healthy',
+    'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight',
+    'Tomato___Leaf_Mold', 'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite',
+    'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
+    'Tomato___healthy'
+]
+
+SOLUTION_MAP = {
+    
+   "Apple___Apple_scab": {
+        "description": "Apple scab is a fungal disease that causes dark, scabby lesions on leaves and fruit.",
+        "treatment": "Apply fungicides during the early growing season and remove fallen leaves."
+    },
+    "Apple___Black_rot": {
+        "description": "Black rot affects apples, causing cankers on limbs and rotting of fruit.",
+        "treatment": "Prune affected branches, remove mummified fruits, and apply fungicide sprays."
+    },
+    "Apple___Cedar_apple_rust": {
+        "description": "Cedar apple rust is a fungal disease requiring both apple and cedar trees to complete its lifecycle.",
+        "treatment": "Remove nearby cedar trees and apply fungicides in early spring."
+    },
+    "Apple___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Blueberry___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Cherry_(including_sour)___Powdery_mildew": {
+        "description": "Powdery mildew causes a white, powdery growth on leaves, reducing fruit quality.",
+        "treatment": "Use sulfur-based fungicides and prune for better air circulation."
+    },
+    "Cherry_(including_sour)___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+        "description": "A fungal disease causing grayish lesions on leaves, reducing photosynthesis.",
+        "treatment": "Rotate crops, use resistant varieties, and apply fungicides."
+    },
+    "Corn_(maize)___Common_rust_": {
+        "description": "Common rust appears as reddish-brown pustules on leaves.",
+        "treatment": "Use resistant hybrids and fungicides if infection is severe."
+    },
+    "Corn_(maize)___Northern_Leaf_Blight": {
+        "description": "Causes elongated gray-green lesions, leading to yield loss.",
+        "treatment": "Use resistant varieties and fungicides."
+    },
+    "Corn_(maize)___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Grape___Black_rot": {
+        "description": "Black rot causes black spots on leaves and rots the fruit.",
+        "treatment": "Remove infected parts and apply fungicides regularly."
+    },
+    "Grape___Esca_(Black_Measles)": {
+        "description": "A fungal disease that leads to leaf scorch and internal wood rot.",
+        "treatment": "Prune infected canes and avoid excessive vine stress."
+    },
+    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": {
+        "description": "Small dark spots on leaves that merge into larger blighted areas.",
+        "treatment": "Remove infected leaves and apply protective fungicides."
+    },
+    "Grape___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Orange___Haunglongbing_(Citrus_greening)": {
+        "description": "A deadly bacterial disease spread by psyllids, causing yellow shoots and bitter fruit.",
+        "treatment": "No cure. Control insect vector and remove infected trees."
+    },
+    "Peach___Bacterial_spot": {
+        "description": "Causes dark lesions on leaves and sunken spots on fruits.",
+        "treatment": "Use copper-based sprays and disease-resistant varieties."
+    },
+    "Peach___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Pepper,_bell___Bacterial_spot": {
+        "description": "Bacterial infection that creates dark water-soaked spots on leaves and fruits.",
+        "treatment": "Use certified seed and copper-based bactericides."
+    },
+    "Pepper,_bell___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Potato___Early_blight": {
+        "description": "Dark concentric spots appear on leaves, leading to defoliation.",
+        "treatment": "Use fungicides and rotate crops."
+    },
+    "Potato___Late_blight": {
+        "description": "Rapid browning and death of leaves; caused the Irish Potato Famine.",
+        "treatment": "Apply systemic fungicides and destroy infected plants."
+    },
+    "Potato___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Raspberry___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Soybean___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Squash___Powdery_mildew": {
+        "description": "White powdery fungus that reduces photosynthesis and yield.",
+        "treatment": "Apply sulfur-based or neem oil sprays."
+    },
+    "Strawberry___Leaf_scorch": {
+        "description": "Dark purple spots on leaves, causing them to wither and die.",
+        "treatment": "Remove infected leaves and apply fungicides."
+    },
+    "Strawberry___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    },
+    "Tomato___Bacterial_spot": {
+        "description": "Dark water-soaked lesions on leaves, stems, and fruits.",
+        "treatment": "Use resistant seeds and copper sprays."
+    },
+    "Tomato___Early_blight": {
+        "description": "Brown concentric rings on leaves, causing defoliation.",
+        "treatment": "Use crop rotation and fungicides."
+    },
+    "Tomato___Late_blight": {
+        "description": "Grayish spots on leaves and brown lesions on fruit.",
+        "treatment": "Destroy infected plants and apply fungicides."
+    },
+    "Tomato___Leaf_Mold": {
+        "description": "Yellowing and moldy growth on underside of leaves.",
+        "treatment": "Increase airflow and apply fungicides."
+    },
+    "Tomato___Septoria_leaf_spot": {
+        "description": "Small water-soaked circular spots that spread rapidly.",
+        "treatment": "Remove infected leaves and use fungicide sprays."
+    },
+    "Tomato___Spider_mites Two-spotted_spider_mite": {
+        "description": "Tiny mites that feed on leaves, causing yellowing and webbing.",
+        "treatment": "Spray with miticides or insecticidal soap."
+    },
+    "Tomato___Target_Spot": {
+        "description": "Dark concentric spots on leaves and stems.",
+        "treatment": "Improve air circulation and use fungicides."
+    },
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+        "description": "Leaves curl and turn yellow; plant stunts in growth.",
+        "treatment": "Control whiteflies and remove infected plants."
+    },
+    "Tomato___Tomato_mosaic_virus": {
+        "description": "Mosaic pattern on leaves and stunted growth.",
+        "treatment": "Remove infected plants and disinfect tools."
+    },
+    "Tomato___healthy": {
+        "description": "The plant is healthy.",
+        "treatment": "No action needed."
+    }
+}
 
 # ──────────────────────────────
 # DATABASE INIT
@@ -45,6 +218,7 @@ def init_db():
                         user_id INTEGER,
                         image_path TEXT,
                         result TEXT,
+                        solution TEXT,
                         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                     )""")
         c.execute("""CREATE TABLE IF NOT EXISTS alerts (
@@ -72,30 +246,30 @@ def predict_image(image_path):
     interpreter.invoke()
     output = interpreter.get_tensor(output_index)
 
-    prediction = np.argmax(output)
-    return f"Prediction result: {prediction}"
+    prediction_idx = int(np.argmax(output))
+    class_name = CLASS_NAMES[prediction_idx]
+    solution = SOLUTION_MAP.get(class_name, "No solution available.")
+
+    return {
+        "name": class_name,
+        "solution": solution
+    }
 
 def get_gps_location():
     g = geocoder.ip('me')
     return g.latlng if g.ok else ["Unknown", "Unknown"]
 
-
-def send_sms(to, message):
-    client = Client(TWILIO_SID, TWILIO_TOKEN)
-    client.messages.create(to=to, from_=TWILIO_FROM, body=message)
-
 def send_sms(to, message):
     try:
-        client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
         client.messages.create(
             body=message,
-            from_=TWILIO_PHONE,
+            from_=TWILIO_FROM,
             to=to
         )
         print(f"✅ SMS sent to {to}")
     except Exception as e:
         print(f"❌ SMS failed: {e}")
-
 
 # ──────────────────────────────
 # ROUTES
@@ -110,8 +284,6 @@ def index():
 def get_location():
     latlng = get_gps_location()
     return {"lat": latlng[0], "lng": latlng[1]}
-
-
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -147,36 +319,63 @@ def signup():
 def send_test_sms():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    # Hardcoded for test; replace with user phone later
     send_sms("+2547XXXXXXX", "🚨 Test Alert from Disease Detector!")
     return "SMS sent!"
-
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
-@app.route('/scan', methods=["GET", "POST"])
+@app.route('/scan', methods=['GET', 'POST'])
 def scan():
-    if request.method == "POST":
-        file = request.files["image"]
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            file.save(filepath)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-            result = predict_image(filepath)
-            user_id = session["user_id"]
+    if request.method == 'POST':
+        # Handle file upload
+        file = request.files['image']
+        if not file:
+            return "No image uploaded", 400
 
-            with sqlite3.connect("database.db") as conn:
-                c = conn.cursor()
-                c.execute("INSERT INTO scans (user_id, image_path, result) VALUES (?, ?, ?)",
-                          (user_id, filepath, result))
-                conn.commit()
+        filename = f"{int(time.time())}_{file.filename}"
+        filepath = os.path.join("static/uploads", filename)
+        file.save(filepath)
 
-            flash("Scan successful!")
-            return redirect(url_for("recent_scans"))
+        # Make prediction
+        disease_info = predict_image(filepath)
+
+        # Get GPS/location 
+        location = request.form.get('location', 'Unknown')
+
+        # Get user details
+        user_id = session['user_id']
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT phone FROM users WHERE id = ?", (user_id,))
+        phone_result = cursor.fetchone()
+        phone = phone_result[0] if phone_result else None
+
+        # Store scan in database
+        cursor.execute(
+            "INSERT INTO scans (user_id, image_path, prediction, location) VALUES (?, ?, ?, ?)",
+            (user_id, filepath, disease_info["name"], location)
+        )
+        conn.commit()
+        conn.close()
+
+        # Send SMS alert
+        if phone:
+            message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']}"
+            send_sms(phone, message)
+
+        # Return result page
+        return render_template("scan.html",
+            image_file=filename,
+            disease=disease_info["name"],
+            solution=disease_info["solution"]
+        )
+
     return render_template("scan.html")
 
 @app.route('/recent-scans')
@@ -184,22 +383,32 @@ def recent_scans():
     user_id = session["user_id"]
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
-        c.execute("SELECT image_path, result, timestamp FROM scans WHERE user_id=? ORDER BY timestamp DESC LIMIT 5", (user_id,))
+        c.execute("SELECT image_path, result, solution, timestamp FROM scans WHERE user_id=? ORDER BY timestamp DESC LIMIT 5", (user_id,))
         scans = c.fetchall()
     return render_template("recent_scans.html", scans=scans)
 
-@app.route('/alerts')
+@app.route('/alerts', methods=["GET", "POST"])
 def alerts():
-    phone = request.form["phone"]
-    task = request.form["task"]
-    time = request.form["time"]
+    if request.method == "POST":
+        phone = request.form["phone"]
+        task = request.form["task"]
+        time = request.form["time"]
+        user_id = session["user_id"]
+
+        message = f"🌱 AgriScan Alert: You scheduled '{task}' at {time}."
+        with sqlite3.connect("database.db") as conn:
+            c = conn.cursor()
+            c.execute("INSERT INTO alerts (user_id, message, scheduled_time) VALUES (?, ?, ?)",
+                      (user_id, message, time))
+            conn.commit()
+
+        send_sms(phone, message)
+
     user_id = session["user_id"]
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
         c.execute("SELECT message, scheduled_time FROM alerts WHERE user_id=? AND is_sent=0", (user_id,))
         alerts = c.fetchall()
-        message = f"🌱 AgriScan Alert: You scheduled '{task}' at {time}."
-    send_sms(phone, message)
 
     return render_template("alerts.html", alerts=alerts)
 

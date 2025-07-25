@@ -7,3 +7,7 @@ opencv-python==4.9.0.80
 geocoder==1.38.1
 requests==2.31.0
 twilio==9.0.1
+sqlalchemy
+passlib[bcrypt]
+openai>=1.14 
+apscheduler==3.10.4
