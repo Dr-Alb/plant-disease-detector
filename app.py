@@ -358,7 +358,7 @@ def scan():
 
         # Store scan in database
         cursor.execute(
-            "INSERT INTO scans (user_id, image_path, prediction, location) VALUES (?, ?, ?, ?)",
+            "INSERT INTO scans (user_id, image_path, result, solution) VALUES (?, ?, ?, ?)",
             (user_id, filepath, disease_info["name"], location)
         )
         conn.commit()
