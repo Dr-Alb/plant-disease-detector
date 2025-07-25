@@ -1,7 +1,6 @@
---only-binary :all:
 Flask
 flask-cors==6.0.1
-Pillow==9.5.0
+Pillow>=10.0.0
 gunicorn
 numpy
 scikit-learn==1.3.0

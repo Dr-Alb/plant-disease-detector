@@ -1,19 +1,12 @@
 services:
-- type: web
-  name: disease-detector
-  env: python
-  runtime: python
-  pythonVersion: 3.11       
-  buildCommand: pip install -r requirements.txt
-  startCommand: gunicorn app:app
+  - type: web
+    name: plant-disease-detector
+    env: python
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    region: oregon
+    plan: free
     envVars:
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: WEATHER_API_KEY
-        sync: false
-      - key: TWILIO_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_PHONE
-        sync: false
+      - key: FLASK_ENV
+        value: production
