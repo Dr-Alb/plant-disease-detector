@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Quick Actions</h2>
+<div class="quick-actions-grid">
+    <div class="action-card">📅 <a href="#">Schedule</a></div>
+    <div class="action-card">📊 <a href="{{ url_for('recent_scans') }}">Reports</a></div>
+    <div class="action-card">🌦️ <a href="#">Weather</a></div>
+    <div class="action-card">💬 <a href="#">AI Help</a></div>
+</div>
+{% endblock %}

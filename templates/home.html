@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="home-page" style="background-image: url('{{ url_for('static', filename='images/plantation.jpg') }}');">
+    <div class="top-bar">
+        <h1>Agriscan AI 🌿</h1>
+        <span class="bell">🔔</span>
+    </div>
+    <div class="welcome-text">
+        <h2>Welcome to Disease Detector</h2>
+        <p>Scan, track, and manage crop diseases easily.</p>
+    </div>
+    <div id="gps-box" class="info-box">
+  📍 Your Location: <span id="gps-location">Detecting...</span>
+</div>
+
+    <div class="cards-section">
+        <div class="card"><a href="{{ url_for('scan') }}">📸 Scan</a></div>
+        <div class="card"><a href="{{ url_for('recent_scans') }}">❤️ Health</a></div>
+        <div class="card"><a href="{{ url_for('alerts') }}">🚨 Alerts</a></div>
+    </div>
+</div>
+
+<script>
+fetch('/get-location')
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('gps-location').textContent =
+      `Lat: ${data.lat}, Lng: ${data.lng}`;
+  })
+  .catch(() => {
+    document.getElementById('gps-location').textContent = "Unavailable";
+  });
+</script>
+
+<!-- Floating Chat Button -->
+<button id="chat-btn" class="chat-float">🤖</button>
+
+<!-- Chat Modal -->
+<div id="chat-box" class="chat-box" style="display: none;">
+  <div class="chat-header">AgriBot AI Assistant</div>
+  <div id="chat-messages" class="chat-messages"></div>
+  <input type="text" id="chat-input" placeholder="Ask me anything..." />
+  <button onclick="sendChat()">Send</button>
+</div>
+
+<script>
+  const chatBtn = document.getElementById("chat-btn");
+  const chatBox = document.getElementById("chat-box");
+
+  chatBtn.onclick = () => chatBox.style.display = 
+    (chatBox.style.display === "none" ? "block" : "none");
+
+  function sendChat() {
+    const input = document.getElementById("chat-input");
+    const msg = input.value;
+    if (!msg) return;
+
+    const messages = document.getElementById("chat-messages");
+    messages.innerHTML += `<div><b>You:</b> ${msg}</div>`;
+    input.value = "";
+
+    fetch("/chat", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg})
+    })
+    .then(res => res.json())
+    .then(data => {
+      messages.innerHTML += `<div><b>Bot:</b> ${data.response || data.error}</div>`;
+    });
+  }
+</script>
+
+
+{% endblock %}

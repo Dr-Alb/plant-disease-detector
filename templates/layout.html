@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Disease Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash">{{ messages[0] }}</div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('scan') }}">Scan</a>
+        <a href="{{ url_for('quick_actions') }}">Schedule</a>
+        <a href="{{ url_for('recent_scans') }}">Reports</a>
+        <a href="{{ url_for('profile') }}">Profile</a>
+    </nav>
+
+    <button class="ai-assistant-btn">🤖</button>
+</body>
+</html>

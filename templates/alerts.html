@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Active Alerts</h2>
+<div class="alerts-list">
+    {% for msg, time in alerts %}
+        <div class="alert-card">
+            <p>⏰ {{ msg }}</p>
+            <small>{{ time }}</small>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
