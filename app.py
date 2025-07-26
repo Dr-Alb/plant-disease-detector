@@ -377,7 +377,7 @@ def scan():
 
     if request.method == 'POST':
         # Handle file upload
-        file = request.files['image']
+        file = request.files.get('image')
         if not file:
             return "No image uploaded", 400
 
