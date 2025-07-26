@@ -306,8 +306,9 @@ def index():
         c.execute("SELECT username, email FROM users WHERE id = ?", (session["user_id"],))
         user = c.fetchone()
         if user:
-            session["username"] = user[0]
-            session["email"] = user[1]
+            username, email = user
+        else:
+            username = email = "Unknown"
 
     # Get location and weather (using session and geolocation)
     latlng = get_gps_location()
