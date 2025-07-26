@@ -25,7 +25,7 @@ TWILIO_SID = "your_twilio_sid"
 TWILIO_TOKEN = "your_twilio_token"
 TWILIO_FROM = "your_twilio_number"
 openai.api_key = os.getenv("OPENAI_API_KEY")
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
+WEATHER_API_KEY = "8c4e262af8008f51fe6b0d0565ba26fd"
 
 # Load TFLite model
 MODEL_PATH = "model.tflite"
@@ -327,6 +327,11 @@ def index():
 
     # Return home page with all the data
     return render_template("home.html", scans=scans, alerts=alerts, weather=weather)
+
+@app.route('/profile')
+def profile():
+    return render_template("profile.html")
+
 
 @app.route('/get-location')
 def get_location():

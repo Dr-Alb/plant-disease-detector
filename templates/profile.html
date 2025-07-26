@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="profile-container">
-    <h2>User Profile</h2>
-    <p>👤 Profile page is under construction.</p>
+<div class="profile-page">
+    <h2>Profile Information</h2>
+    <p><strong>Username:</strong> {{ session.get('username', 'N/A') }}</p>
+    <p><strong>Email:</strong> {{ session.get('email', 'N/A') }}</p>
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
 </div>
 {% endblock %}
