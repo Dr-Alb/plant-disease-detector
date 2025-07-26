@@ -10,7 +10,7 @@
         }
         .btn {
             padding: 10px 20px;
-            margin: 10px;
+            margin: 40px;
             font-size: 16px;
             border: none;
             color: white;
@@ -39,7 +39,10 @@
     </form>
 
     <hr>
-
+    <h3>Or Take a Photo</h3>
+    <video id="camera" autoplay playsinline width="320" height="240"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <br>
     <button class="btn" onclick="startCamera()">Take Photo</button>
 
     <div id="cameraArea" class="hidden">
