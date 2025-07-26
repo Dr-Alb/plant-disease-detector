@@ -314,7 +314,7 @@ def signup():
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
         try:
-            cursor.execute('INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)',
+            cursor.execute('INSERT INTO users (name, email, password, phone_number) VALUES (?, ?, ?, ?)',
                       (name, email, password, phone))
             conn.commit()
             flash('Signup successful. Please log in.')
