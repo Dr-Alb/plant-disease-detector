@@ -60,4 +60,4 @@ CREATE TABLE IF NOT EXISTS reports (
 
 conn.commit()
 conn.close()
-print("✅ database.db created!")
+print(" database.db created!")

@@ -341,8 +341,8 @@ def get_location():
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email")
+        password = request.form.get("password")
         with sqlite3.connect("database.db") as conn:
             c = conn.cursor()
             c.execute("SELECT id FROM users WHERE email=? AND password=?", (email, password))
