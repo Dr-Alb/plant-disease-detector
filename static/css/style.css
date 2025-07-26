@@ -6,7 +6,7 @@ body, html {
     background: #f8f9fa;
     color: #333;
     height: 100%;
-    background-image: url("static/images/lumin-osity-6DMht7wYt6g-unsplash.jpg");
+    background-image: url("static/images/erwan-hesry-1q75BReKpms-unsplash.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -40,7 +40,7 @@ a {
     display: flex;
     justify-content: space-between;
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(7, 225, 113, 0.8);
     backdrop-filter: blur(6px);
     border-radius: 10px;
     
@@ -52,7 +52,7 @@ a {
 
 /* ─── Welcome Section ───────────────────── */
 .welcome-text {
-    background: rgba(129, 126, 126, 0.5);
+    background: rgba(23, 213, 10, 0.5);
     padding: 1rem;
     border-radius: 10px;
     color: white;
@@ -60,7 +60,7 @@ a {
 
 /* ─── Card Styles ───────────────────────── */
 .card {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(208, 203, 203, 0.95);
     margin: 1rem auto;
     padding: 1rem;
     border-radius: 12px;
