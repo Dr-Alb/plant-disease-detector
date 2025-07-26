@@ -308,10 +308,10 @@ def signup():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
-        phone_number = request.form.get('phone_number') 
+        phone = request.form.get('phone_number') 
 
         conn = sqlite3.connect('users.db')
-        c = conn.cursor()
+        cursor = conn.cursor()
         try:
             c.execute('INSERT INTO users (name, email, password, phone_number) VALUES (?, ?, ?, ?)',
                       (name, email, password, phone_number))
@@ -451,4 +451,5 @@ def profile():
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    app.run(host='0.0.0.0', port=5000)
+    init_db()
+    app.run(debug=false, host='0.0.0.0', port=5000)
