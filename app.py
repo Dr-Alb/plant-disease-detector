@@ -206,38 +206,6 @@ SOLUTION_MAP = {
 }
 
 # ──────────────────────────────
-# DATABASE INIT
-# ──────────────────────────────
-def init_db():
-    with sqlite3.connect("database.db") as conn:
-        c = conn.cursor()
-        c.execute("""CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT,
-                        email TEXT,
-                        password TEXT,
-                        phone_number TEXT
-                    )""")
-        c.execute("""CREATE TABLE IF NOT EXISTS scans (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER,
-                        image_path TEXT,
-                        result TEXT,
-                        solution TEXT,
-                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )""")
-        c.execute("""CREATE TABLE IF NOT EXISTS alerts (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER,
-                        message TEXT,
-                        scheduled_time TEXT,
-                        is_sent INTEGER DEFAULT 0
-                    )""")
-        conn.commit()
-
-init_db()
-
-# ──────────────────────────────
 # HELPERS
 # ──────────────────────────────
 def predict_image(image_path):
@@ -300,7 +268,7 @@ def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    # Fetch profile info (optional)
+    # Fetch user profile info
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
         c.execute("SELECT username, email FROM users WHERE id = ?", (session["user_id"],))
@@ -310,23 +278,32 @@ def index():
         else:
             username = email = "Unknown"
 
-    # Get location and weather (using session and geolocation)
+    # Get location and weather
     latlng = get_gps_location()
     weather = get_weather(latlng[0], latlng[1])
 
-    # Fetch recent scans
+    # Fetch recent scans – 
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
-        c.execute("SELECT image_path, result, solution, timestamp FROM scans WHERE user_id=? ORDER BY timestamp DESC LIMIT 5", (session["user_id"],))
+        c.execute("""
+            SELECT image_path, disease_name AS result, solution, timestamp 
+            FROM scans 
+            WHERE user_id=? 
+            ORDER BY timestamp DESC 
+            LIMIT 5
+        """, (session["user_id"],))
         scans = c.fetchall()
 
-    # Fetch active alerts
+    # Fetch active alerts – 
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
-        c.execute("SELECT message, scheduled_time FROM alerts WHERE user_id=? AND is_sent=0", (session["user_id"],))
+        c.execute("""
+            SELECT task AS message, alert_time AS scheduled_time 
+            FROM alerts 
+            WHERE user_id=?
+        """, (session["user_id"],))
         alerts = c.fetchall()
 
-    # Return home page with all the data
     return render_template("home.html", scans=scans, alerts=alerts, weather=weather)
 
 @app.route('/profile')
