@@ -346,7 +346,8 @@ def login():
         password = request.form.get('password')
         with sqlite3.connect("database.db") as conn:
             c = conn.cursor()
-            c.execute("SELECT id FROM users WHERE email=? AND password=?", (email, password))
+            c.execute("SELECT id, username FROM users WHERE email=? AND password=?", (email, password))
+
             user = c.fetchone()
             if user:
                 session["user_id"] = user[0]
@@ -423,9 +424,10 @@ def scan():
 
         # Store scan in database
         cursor.execute(
-            "INSERT INTO scans (user_id, image_path, result, solution) VALUES (?, ?, ?, ?)",
-            (user_id, filepath, disease_info["name"], location)
-        )
+    "INSERT INTO scans (user_id, image_path, disease_name, solution) VALUES (?, ?, ?, ?)",
+    (user_id, filepath, disease_info["name"], disease_info["solution"]["treatment"])
+)
+
         conn.commit()
         conn.close()
 
