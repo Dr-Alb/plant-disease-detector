@@ -211,7 +211,8 @@ def init_db():
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         username TEXT,
                         email TEXT,
-                        password TEXT
+                        password TEXT,
+                        phone_number TEXT
                     )""")
         c.execute("""CREATE TABLE IF NOT EXISTS scans (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -301,19 +302,27 @@ def login():
                 flash("Invalid credentials")
     return render_template("login.html")
 
-@app.route('/signup', methods=["GET", "POST"])
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == "POST":
-        username = request.form["username"]
-        email = request.form["email"]
-        password = request.form["password"]
-        with sqlite3.connect("database.db") as conn:
-            c = conn.cursor()
-            c.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                      (username, email, password))
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        phone_number = request.form.get('phone_number') 
+
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        try:
+            c.execute('INSERT INTO users (name, email, password, phone_number) VALUES (?, ?, ?, ?)',
+                      (name, email, password, phone_number))
             conn.commit()
-        return redirect(url_for("login"))
-    return render_template("signup.html")
+            flash('Signup successful. Please log in.')
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            flash('Email already exists.')
+        finally:
+            conn.close()
+    return render_template('signup.html')
 
 @app.route('/send-test-sms')
 def send_test_sms():
