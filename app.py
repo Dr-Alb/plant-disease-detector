@@ -9,6 +9,8 @@ import geocoder
 from twilio.rest import Client
 import openai
 import time
+import requests
+
 
 # ──────────────────────────────
 # CONFIGURATION
@@ -23,6 +25,7 @@ TWILIO_SID = "your_twilio_sid"
 TWILIO_TOKEN = "your_twilio_token"
 TWILIO_FROM = "your_twilio_number"
 openai.api_key = os.getenv("OPENAI_API_KEY")
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 
 # Load TFLite model
 MODEL_PATH = "model.tflite"
@@ -257,6 +260,22 @@ def predict_image(image_path):
         "solution": solution
     }
 
+def get_weather(lat, lon):
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
+        response = requests.get(url)
+        data = response.json()
+        if data.get("main"):
+            return {
+                "location": data["name"],
+                "temperature": data["main"]["temp"],
+                "condition": data["weather"][0]["description"].capitalize()
+            }
+        else:
+            return {"location": "Unknown", "temperature": "?", "condition": "Unavailable"}
+    except:
+        return {"location": "Unknown", "temperature": "?", "condition": "Unavailable"}
+
 def get_gps_location():
     g = geocoder.ip('me')
     return g.latlng if g.ok else ["Unknown", "Unknown"]
@@ -280,7 +299,34 @@ def send_sms(to, message):
 def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    return render_template("home.html")
+
+    # Fetch profile info (optional)
+    with sqlite3.connect("database.db") as conn:
+        c = conn.cursor()
+        c.execute("SELECT username, email FROM users WHERE id = ?", (session["user_id"],))
+        user = c.fetchone()
+        if user:
+            session["username"] = user[0]
+            session["email"] = user[1]
+
+    # Get location and weather (using session and geolocation)
+    latlng = get_gps_location()
+    weather = get_weather(latlng[0], latlng[1])
+
+    # Fetch recent scans
+    with sqlite3.connect("database.db") as conn:
+        c = conn.cursor()
+        c.execute("SELECT image_path, result, solution, timestamp FROM scans WHERE user_id=? ORDER BY timestamp DESC LIMIT 5", (session["user_id"],))
+        scans = c.fetchall()
+
+    # Fetch active alerts
+    with sqlite3.connect("database.db") as conn:
+        c = conn.cursor()
+        c.execute("SELECT message, scheduled_time FROM alerts WHERE user_id=? AND is_sent=0", (session["user_id"],))
+        alerts = c.fetchall()
+
+    # Return home page with all the data
+    return render_template("home.html", scans=scans, alerts=alerts, weather=weather)
 
 @app.route('/get-location')
 def get_location():

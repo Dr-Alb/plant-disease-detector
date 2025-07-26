@@ -24,6 +24,8 @@
         <a href="{{ url_for('recent_scans') }}">Reports</a>
         <a href="{{ url_for('profile') }}">Profile</a>
     </nav>
+    {% if session.get('user_id') %}
     <button class="ai-assistant-btn">🤖</button>
+    {% endif %}
 </body>
 </html>
