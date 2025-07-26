@@ -6,7 +6,7 @@ body, html {
     background: #f8f9fa;
     color: #333;
     height: 100%;
-    background-image: url("../images/plantation.jpg");
+    background-image: url("static/images/lumin-osity-6DMht7wYt6g-unsplash.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -43,7 +43,7 @@ a {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(6px);
     border-radius: 10px;
-    margin-bottom: 1rem;
+    
 }
 
 .bell {
@@ -52,7 +52,7 @@ a {
 
 /* ─── Welcome Section ───────────────────── */
 .welcome-text {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(129, 126, 126, 0.5);
     padding: 1rem;
     border-radius: 10px;
     color: white;
