@@ -448,7 +448,8 @@ def recent_scans():
     user_id = session["user_id"]
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
-        c.execute("SELECT image_path, result, solution, timestamp FROM scans WHERE user_id=? ORDER BY timestamp DESC LIMIT 5", (user_id,))
+        c.execute("SELECT image_path, disease_name AS result, solution, timestamp FROM scans WHERE user_id=? ORDER BY timestamp DESC LIMIT 5", (session["user_id"],))
+
         scans = c.fetchall()
     return render_template("recent_scans.html", scans=scans)
 
