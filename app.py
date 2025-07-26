@@ -449,7 +449,7 @@ def quick_actions():
 
 @app.route('/profile')
 def profile():
-    return "User profile coming soon!"
+    return render_template("profile.html")
 
 # ──────────────────────────────
 # RUN
