@@ -306,7 +306,7 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        name = request.form['name']
+        name = request.form['username']
         email = request.form['email']
         password = request.form['password']
         phone = request.form.get('phone_number') 
