@@ -341,14 +341,17 @@ def get_location():
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+        email = request.form.get('email')
+        password = request.form.get('password')
         with sqlite3.connect("database.db") as conn:
             c = conn.cursor()
             c.execute("SELECT id FROM users WHERE email=? AND password=?", (email, password))
             user = c.fetchone()
             if user:
                 session["user_id"] = user[0]
+                session["username"] = user[1]
+                session["email"] = email
+                flash("Login successful!")
                 return redirect(url_for("index"))
             else:
                 flash("Invalid credentials")
