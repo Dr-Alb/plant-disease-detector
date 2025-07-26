@@ -8,6 +8,7 @@ import tensorflow as tf
 import geocoder
 from twilio.rest import Client
 import openai
+import time
 
 # ──────────────────────────────
 # CONFIGURATION
@@ -310,11 +311,11 @@ def signup():
         password = request.form['password']
         phone = request.form.get('phone_number') 
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
         try:
-            c.execute('INSERT INTO users (name, email, password, phone_number) VALUES (?, ?, ?, ?)',
-                      (name, email, password, phone_number))
+            cursor.execute('INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)',
+                      (name, email, password, phone))
             conn.commit()
             flash('Signup successful. Please log in.')
             return redirect(url_for('login'))
@@ -420,6 +421,11 @@ def alerts():
         alerts = c.fetchall()
 
     return render_template("alerts.html", alerts=alerts)
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 
 @app.route('/chat', methods=['POST'])
 def chat():
