@@ -498,9 +498,7 @@ def chat():
 def quick_actions():
     return render_template("quick_actions.html")
 
-@app.route('/profile')
-def profile():
-    return render_template("profile.html")
+
 
 # ──────────────────────────────
 # RUN
