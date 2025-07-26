@@ -1,56 +1,43 @@
 import sqlite3
 
-conn = sqlite3.connect("database.db")
-cursor = conn.cursor()
+# Connect to SQLite DB
+with sqlite3.connect("database.db") as conn:
+    cursor = conn.cursor()
 
-# Users table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    email TEXT,
-    phone_number TEXT,
-    password TEXT
-)
-""")
+    # Create users table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        email TEXT UNIQUE,
+        phone_number TEXT,
+        password TEXT
+    )
+    """)
 
-# Scans table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS scans (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    image_path TEXT,
-    prediction TEXT,
-    location TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-)
-               ALTER TABLE scans ADD COLUMN disease_name TEXT;
-ALTER TABLE scans ADD COLUMN solution TEXT;
+    # Create scans table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS scans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        image_path TEXT,
+        result TEXT,
+        solution TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
-""")
+    # Create alerts table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        message TEXT,
+        scheduled_time TEXT,
+        is_sent INTEGER DEFAULT 0
+    )
+    """)
 
-# Alerts table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS alerts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    task TEXT,
-    alert_time TEXT,
-    status TEXT,
-    phone TEXT
-)
-""")
+    conn.commit()
 
-# Reports table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS reports (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    report_data TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)
-""")
-
-conn.commit()
-conn.close()
-print("✅ database.db created!")
+print("✅ Database initialized successfully.")
