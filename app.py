@@ -15,6 +15,8 @@ from flask import jsonify
 import threading, time
 from apscheduler.schedulers.background import BackgroundScheduler
 import sqlite3
+from openai import OpenAI
+client = OpenAI()
 
 
 # ──────────────────────────────
@@ -573,6 +575,7 @@ def chat():
         answer = response.choices[0].message.content
         return {"response": answer}
     except Exception as e:
+        print("ERROR in /chat:", str(e))
         return {"error": str(e)}, 500
 
 @app.route('/quick-actions')
