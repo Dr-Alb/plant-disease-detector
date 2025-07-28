@@ -10,6 +10,7 @@ from twilio.rest import Client
 import openai
 import time
 import requests
+from flask import jsonify
 
 
 # ──────────────────────────────
@@ -388,6 +389,8 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
+
+
 @app.route('/scan', methods=['GET', 'POST'])
 def scan():
     if 'user_id' not in session:
@@ -411,7 +414,6 @@ def scan():
 
             # Make prediction
             disease_info = predict_image(filepath)
-        
             print(f"DEBUG: Prediction result: {disease_info}")
 
             # Get GPS/location 
@@ -433,37 +435,34 @@ def scan():
                 (user_id, filepath, disease_info["name"], disease_info["solution"]["treatment"])
             )
             conn.commit()
-            print("DEBUG: Scan inserted into database")
             conn.close()
-            return jsonify({
-                "image": f"/{filepath}",
-            "disease": disease_info["name"],
-            "plant": disease_info["plant"],
-            "confidence": f"{disease_info['confidence']}%",
-            "solution": disease_info["solution"]["treatment"]
-               }
-        except ValueError as e:
-            return {"error": str(e)}, 400  )
+            print("DEBUG: Scan inserted into database")
 
-            # Send SMS alert
+            # Send SMS alert (if phone exists)
             if phone:
                 message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatment']}"
                 send_sms(phone, message)
                 print("DEBUG: SMS sent")
 
-            # Return result page
-            return render_template("scan.html",
-                image_file=filename,
-                disease=disease_info["name"],
-                solution=disease_info["solution"]
-            )
+            # Return JSON (for AJAX display)
+            return jsonify({
+                "image": f"/{filepath}",
+                "disease": disease_info["name"],
+                "plant": disease_info.get("plant", "Unknown"),
+                "confidence": f"{disease_info.get('confidence', 0)}%",
+                "solution": disease_info["solution"]["treatment"]
+            })
+
+        except ValueError as e:
+            print("ValueError:", str(e))
+            return jsonify({"error": str(e)}), 400
 
         except Exception as e:
-            print(" ERROR in /scan:", str(e))
-            return f"Internal Server Error: {str(e)}", 500
+            print("ERROR in /scan:", str(e))
+            return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
+    # For GET request, render the scan page
     return render_template("scan.html")
-
 
 @app.route('/recent-scans')
 def recent_scans():
