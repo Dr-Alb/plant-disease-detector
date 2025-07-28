@@ -376,56 +376,66 @@ def scan():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        # Handle file upload
-        file = request.files.get('image')
-        if not file:
-            return "No image uploaded", 400
-
-        filename = f"{int(time.time())}_{file.filename}"
-        filepath = os.path.join("static/uploads", filename)
-        file.save(filepath)
-
-        # Make prediction
         try:
+            print("DEBUG: Scan request started")
+
+            # Handle file upload
+            file = request.files.get('image')
+            if not file or file.filename == "":
+                print("ERROR: No image uploaded")
+                flash("Please upload or capture a photo")
+                return redirect(url_for('scan'))
+
+            filename = f"{int(time.time())}_{file.filename}"
+            filepath = os.path.join("static/uploads", filename)
+            file.save(filepath)
+            print(f"DEBUG: File saved at {filepath}")
+
+            # Make prediction
             disease_info = predict_image(filepath)
+            print(f"DEBUG: Prediction result: {disease_info}")
+
+            # Get GPS/location 
+            location = request.form.get('location', 'Unknown')
+            print(f"DEBUG: Location: {location}")
+
+            # Get user details
+            user_id = session['user_id']
+            conn = sqlite3.connect('database.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT phone_number FROM users WHERE id = ?", (user_id,))
+            phone_result = cursor.fetchone()
+            phone = phone_result[0] if phone_result else None
+            print(f"DEBUG: User phone: {phone}")
+
+            # Store scan in database
+            cursor.execute(
+                "INSERT INTO scans (user_id, image_path, disease_name, solution) VALUES (?, ?, ?, ?)",
+                (user_id, filepath, disease_info["name"], disease_info["solution"]["treatment"])
+            )
+            conn.commit()
+            print("DEBUG: Scan inserted into database")
+            conn.close()
+
+            # Send SMS alert
+            if phone:
+                message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatment']}"
+                send_sms(phone, message)
+                print("DEBUG: SMS sent")
+
+            # Return result page
+            return render_template("scan.html",
+                image_file=filename,
+                disease=disease_info["name"],
+                solution=disease_info["solution"]
+            )
+
         except Exception as e:
-            print("Prediction Error:", e)
-            return "Prediction Failed", 500
-
-
-        # Get GPS/location 
-        location = request.form.get('location', 'Unknown')
-
-        # Get user details
-        user_id = session['user_id']
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT phone_number FROM users WHERE id = ?", (user_id,))
-        phone_result = cursor.fetchone()
-        phone = phone_result[0] if phone_result else None
-
-        # Store scan in database
-        cursor.execute(
-    "INSERT INTO scans (user_id, image_path, disease_name, solution) VALUES (?, ?, ?, ?)",
-    (user_id, filepath, disease_info["name"], disease_info["solution"]["treatment"])
-)
-
-        conn.commit()
-        conn.close()
-
-        # Send SMS alert
-        if phone:
-            message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatement']}"
-            send_sms(phone_number, message)
-
-        # Return result page
-        return render_template("scan.html",
-            image_file=filename,
-            disease=disease_info["name"],
-            solution=disease_info["solution"]
-        )
+            print("❌ ERROR in /scan:", str(e))
+            return f"Internal Server Error: {str(e)}", 500
 
     return render_template("scan.html")
+
 
 @app.route('/recent-scans')
 def recent_scans():
