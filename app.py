@@ -395,7 +395,7 @@ def scan():
         user_id = session['user_id']
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT phone FROM users WHERE id = ?", (user_id,))
+        cursor.execute("SELECT phone_number FROM users WHERE id = ?", (user_id,))
         phone_result = cursor.fetchone()
         phone = phone_result[0] if phone_result else None
 
@@ -410,7 +410,7 @@ def scan():
 
         # Send SMS alert
         if phone:
-            message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']}"
+            message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatement']}"
             send_sms(phone, message)
 
         # Return result page

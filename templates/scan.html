@@ -60,6 +60,8 @@
             margin-top: 20px;
         }
 
+        .hidden { display: none; }
+
         @media (max-width: 768px) {
             .file-upload-box {
                 width: 100%;
@@ -92,10 +94,10 @@
     <!-- Camera Modal Area -->
     <div id="cameraArea" class="hidden">
         <video id="video" width="320" height="240" autoplay></video><br>
-        <button class="btn" onclick="capturePhoto()">📸 Capture</button>
+        <button type="button" class="btn" onclick="capturePhoto()">📸 Capture</button>
         <canvas id="canvas" width="320" height="240" class="hidden"></canvas>
 
-        <form id="cameraForm" method="POST" enctype="multipart/form-data">
+        <form id="cameraForm" method="POST" action="/scan" enctype="multipart/form-data">
             <input type="hidden" name="location" id="gpsLocation">
             <input type="file" name="image" id="capturedImage" hidden>
         </form>
@@ -103,17 +105,10 @@
 
     <script>
         function startCamera() {
-            const video = document.getElementById('video');
-            const cameraArea = document.getElementById('cameraArea');
-            cameraArea.classList.remove("hidden");
-
+            document.getElementById('cameraArea').classList.remove("hidden");
             navigator.mediaDevices.getUserMedia({ video: true })
-                .then((stream) => {
-                    video.srcObject = stream;
-                })
-                .catch((err) => {
-                    alert("Error accessing camera: " + err);
-                });
+                .then((stream) => { document.getElementById('video').srcObject = stream; })
+                .catch((err) => alert("Error accessing camera: " + err));
         }
 
         function capturePhoto() {
@@ -121,7 +116,7 @@
             const video = document.getElementById('video');
             const context = canvas.getContext('2d');
 
-            canvas.classList.remove("hidden");
+            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
