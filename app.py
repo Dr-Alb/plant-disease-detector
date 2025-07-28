@@ -517,7 +517,7 @@ def alerts():
             if alert_dt < now:
                c.execute("UPDATE alerts SET status='done' WHERE id=?", (alert_id,))
     conn.commit()
-    return render_template("alerts.html", alerts=alerts)
+    return render_template("alerts.html", alerts_data=alerts)
 
 
 @app.route('/favicon.ico')
