@@ -9,6 +9,7 @@ import geocoder
 from twilio.rest import Client
 import openai
 import time
+from datetime import datetime
 import requests
 from flask import jsonify
 
@@ -476,6 +477,8 @@ def recent_scans():
 
 @app.route('/alerts', methods=["GET", "POST"])
 def alerts():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     if request.method == "POST":
         phone = request.form["phone"]
         task = request.form["task"]
@@ -485,16 +488,23 @@ def alerts():
         message = f"🌱 AgriScan Alert: You scheduled '{task}' at {time}."
         with sqlite3.connect("database.db") as conn:
             c = conn.cursor()
-            c.execute("INSERT INTO alerts (user_id, message, scheduled_time) VALUES (?, ?, ?)",
-                      (user_id, message, time))
+            c.execute("INSERT INTO alerts (user_id, task, alert_time,status,phone) VALUES (?, ?, ?,?, ?)",
+                      (user_id, task, time, "pending", phone))
             conn.commit()
 
         send_sms(phone, message)
-
+        flash("Alert scheduled successfully!")
+        # Auto-update status for expired alerts
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    with sqlite3.connect("database.db") as conn:
+        c = conn.cursor()
+        c.execute("UPDATE alerts SET status='done' WHERE alert_time < ? AND status='pending'", (now,))
+        conn.commit()
+    # Fetch alerts for the user
     user_id = session["user_id"]
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
-        c.execute("SELECT message, scheduled_time FROM alerts WHERE user_id=? AND is_sent=0", (user_id,))
+        c.execute("SELECT task, alert_time status FROM alerts WHERE user_id=?", (user_id,))
         alerts = c.fetchall()
 
     return render_template("alerts.html", alerts=alerts)
