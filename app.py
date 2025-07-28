@@ -417,6 +417,11 @@ def scan():
             conn.commit()
             print("DEBUG: Scan inserted into database")
             conn.close()
+            return jsonify({
+                "image": filepath,
+                "disease": disease_info["name"],
+                "solution": disease_info["solution"]["treatment"]
+         })
 
             # Send SMS alert
             if phone:

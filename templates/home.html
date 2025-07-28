@@ -70,47 +70,81 @@
         </form>
     </div>
 </div>
-
-<!-- ✅ Recent Scans Section -->
-<h3>🖼️ Recent Scans</h3>
-<div class="scans">
-    {% for scan in scans %}
-        <div class="scan-card">
-            <img src="{{ scan[0] }}" alt="Scan Image" width="150">
-            <p><strong>{{ scan[1] }}</strong></p>
-            <small>{{ scan[3] }}</small>
-        </div>
-    {% else %}
-        <p>No recent scans yet.</p>
-    {% endfor %}
+<div id="loading-spinner" style="display:none; margin-top: 20px;">
+    <img src="/static/spinner.gif" alt="Loading..." width="50">
+    <p>🔍 Analyzing leaf, please wait...</p>
+</div>
+<div id="result-section" style="margin-top: 30px; display: none;">
+    <h3>🧾 Scan Result</h3>
+    <img id="result-image" src="" style="max-width: 200px; margin: 10px;">
+    <p><strong>Disease:</strong> <span id="result-disease"></span></p>
+    <p><strong>Solution:</strong> <span id="result-solution"></span></p>
 </div>
 
 <script>
-    function startCamera() {
-        document.getElementById('cameraArea').classList.remove("hidden");
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => { document.getElementById('video').srcObject = stream; })
-            .catch((err) => alert("Error accessing camera: " + err));
-    }
+function showSpinner() {
+    document.getElementById('loading-spinner').style.display = 'block';
+    document.getElementById('result-section').style.display = 'none';
+}
 
-    function capturePhoto() {
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
+function hideSpinner() {
+    document.getElementById('loading-spinner').style.display = 'none';
+}
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+document.querySelector('input[name="image"]').addEventListener('change', function(e) {
+    e.preventDefault();
+    const formData = new FormData(document.getElementById('uploadForm'));
 
-        canvas.toBlob((blob) => {
-            const file = new File([blob], "captured.jpg", { type: "image/jpeg" });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            document.getElementById('capturedImage').files = dataTransfer.files;
-            document.getElementById('cameraForm').submit();
-        }, "image/jpeg");
-    }
+    showSpinner(); // Show spinner
+
+    fetch('/scan', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        hideSpinner(); // Hide spinner
+        if (data.error) {
+            alert(data.error);
+        } else {
+            document.getElementById('result-section').style.display = 'block';
+            document.getElementById('result-image').src = data.image;
+            document.getElementById('result-disease').innerText = data.disease;
+            document.getElementById('result-solution').innerText = data.solution;
+        }
+    });
+});
+
+function capturePhoto() {
+    const canvas = document.getElementById('canvas');
+    const video = document.getElementById('video');
+    const context = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(function(blob) {
+        const formData = new FormData();
+        formData.append('image', new File([blob], "captured.jpg", { type: "image/jpeg" }));
+
+        showSpinner(); // Show spinner
+
+        fetch('/scan', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            hideSpinner(); // Hide spinner
+            if (!data.error) {
+                document.getElementById('result-section').style.display = 'block';
+                document.getElementById('result-image').src = data.image;
+                document.getElementById('result-disease').innerText = data.disease;
+                document.getElementById('result-solution').innerText = data.solution;
+            } else {
+                alert(data.error);
+            }
+        });
+    }, "image/jpeg");
+}
+
 </script>
+
 
 <style>
     .upload-section {
@@ -120,19 +154,33 @@
         margin: 20px 0;
     }
     .file-upload-box {
-        width: 45%;
+        width: 30%;
         aspect-ratio: 1 / 1;
         border: 2px dashed #aaa;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        font-weight: bold;
         font-size: 18px;
         background: #f8f8f8;
+        transition: background 0.3s ease;
+        text-align: center;
     }
+    .file-upload-box:hover {
+    background: #eaeaea;
+}
+.file-upload-box span {
+    pointer-events: none; 
+}
+
+input[type="file"] {
+    display: none;
+}
     .btn { background: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; }
     .hidden { display: none; }
 </style>
+
 
 
   <!-- Recent Scans -->
