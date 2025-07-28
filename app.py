@@ -19,6 +19,7 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Twilio (Optional: Replace with your credentials)
 TWILIO_SID = "your_twilio_sid"
