@@ -17,7 +17,7 @@
         <h2>📅 Schedule Your Farm Tasks</h2>
         <form method="POST">
             <input type="text" name="task" placeholder="Enter task (e.g., Water the crops)" required>
-            <input type="datetime-local" name="time" required>
+            <input type="datetime-local" name="alert_time" required>
             <input type="text" name="phone" placeholder="Phone number (Optional)">
             <button type="submit">➕ Add Task</button>
         </form>
@@ -29,13 +29,19 @@
                 <th>Time</th>
                 <th>Status</th>
             </tr>
-            {% for task, alert_time, status in alerts_data %}
-                <tr class="{{ 'done' if status == 'done' else '' }}">
-                    <td>{{ task }}</td>
-                    <td>{{ alert_time }}</td>
-                    <td>{{ status }}</td>
+            {% if alerts_data %}
+                {% for task, alert_time, status in alerts_data %}
+                    <tr class="{{ 'done' if status == 'done' else '' }}">
+                        <td>{{ task }}</td>
+                        <td>{{ alert_time }}</td>
+                        <td>{{ status }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No tasks scheduled yet.</td>
                 </tr>
-            {% endfor %}
+            {% endif %}
         </table>
     </div>
 </body>

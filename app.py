@@ -13,6 +13,8 @@ from datetime import datetime
 import requests
 from flask import jsonify
 import threading, time
+from apscheduler.schedulers.background import BackgroundScheduler
+import sqlite3
 
 
 # ──────────────────────────────
@@ -269,6 +271,31 @@ def get_gps_location():
     g = geocoder.ip('me')
     return g.latlng if g.ok else ["Unknown", "Unknown"]
 
+scheduler = BackgroundScheduler()
+
+def send_due_alerts():
+    """Check DB for due alerts and send SMS automatically."""
+    now = datetime.now()
+    with sqlite3.connect("database.db") as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, task, alert_time, phone FROM alerts WHERE status='pending'")
+        rows = c.fetchall()
+
+        for alert_id, task, alert_time, phone in rows:
+            alert_dt = datetime.strptime(alert_time, "%Y-%m-%dT%H:%M")
+            if alert_dt <= now:
+                # Send SMS if phone number exists
+                if phone:
+                    message = f" AgriScan Alert: '{task}' is due now!"
+                    send_sms(phone, message)
+                # Mark alert as done
+                c.execute("UPDATE alerts SET status='done' WHERE id=?", (alert_id,))
+        conn.commit()
+
+# Start scheduler
+scheduler.add_job(send_due_alerts, 'interval', minutes=1)  # checks every minute
+scheduler.start()
+
 def send_sms(to, message):
     try:
         client = Client(TWILIO_SID, TWILIO_TOKEN)
@@ -277,9 +304,9 @@ def send_sms(to, message):
             from_=TWILIO_FROM,
             to=to
         )
-        print(f"✅ SMS sent to {to}")
+        print(f" SMS sent to {to}")
     except Exception as e:
-        print(f"❌ SMS failed: {e}")
+        print(f" SMS failed: {e}")
 
 # ──────────────────────────────
 # ROUTES
@@ -383,7 +410,7 @@ def signup():
 def send_test_sms():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    send_sms("+2547XXXXXXX", "🚨 Test Alert from Disease Detector!")
+    send_sms("+2547XXXXXXX", " Test Alert from Disease Detector!")
     return "SMS sent!"
 
 @app.route('/logout')
@@ -442,7 +469,7 @@ def scan():
 
             # Send SMS alert (if phone exists)
             if phone:
-                message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatment']}"
+                message = f" Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatment']}"
                 send_sms(phone, message)
                 print("DEBUG: SMS sent")
 
@@ -478,6 +505,8 @@ def recent_scans():
 
 from datetime import datetime
 
+from datetime import datetime
+
 @app.route('/alerts', methods=["GET", "POST"])
 def alerts():
     if "user_id" not in session:
@@ -488,22 +517,22 @@ def alerts():
     if request.method == "POST":
         # Get form data
         task = request.form["task"]
-        time = request.form["time"]
+        alert_time = request.form["alert_time"]  
         phone = request.form.get("phone", "")
 
         # Insert task into DB
         with sqlite3.connect("database.db") as conn:
             c = conn.cursor()
             c.execute("INSERT INTO alerts (user_id, task, alert_time, status, phone) VALUES (?, ?, ?, ?, ?)",
-                      (user_id, task, time, "pending", phone))
+                      (user_id, task, alert_time, "pending", phone))
             conn.commit()
 
         # Send SMS (optional)
         if phone:
-            message = f" AgriScan Alert: '{task}' is scheduled at {time}."
+            message = f" AgriScan Alert: '{task}' is scheduled at {alert_time}."
             send_sms(phone, message)
 
-        flash("Task scheduled successfully!")
+        flash(" Task scheduled successfully!")
 
     # Auto-update expired alerts
     now = datetime.now()
@@ -513,11 +542,16 @@ def alerts():
         rows = c.fetchall()
 
         for alert_id, alert_time in rows:
-            alert_dt = datetime.strptime(alert_time, "%Y-%m-%dT%H:%M")  # Convert stored string to datetime
+            alert_dt = datetime.strptime(alert_time, "%Y-%m-%dT%H:%M")
             if alert_dt < now:
-               c.execute("UPDATE alerts SET status='done' WHERE id=?", (alert_id,))
-    conn.commit()
-    return render_template("alerts.html", alerts_data=alerts)
+                c.execute("UPDATE alerts SET status='done' WHERE id=?", (alert_id,))
+        conn.commit()
+
+        # Fetch updated alerts to display
+        c.execute("SELECT task, alert_time, status FROM alerts WHERE user_id=? ORDER BY alert_time DESC", (user_id,))
+        alerts_data = c.fetchall()
+
+    return render_template("alerts.html", alerts_data=alerts_data)
 
 
 @app.route('/favicon.ico')
