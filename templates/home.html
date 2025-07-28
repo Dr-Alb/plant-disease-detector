@@ -38,15 +38,102 @@
     <p id="gps-location">Detecting...</p>
   </div>
 
-  <!-- Scan Form -->
-  <div class="card scan-card">
-    <h3>📸 Scan Plant</h3>
-    <form method="POST" action="{{ url_for('scan') }}" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/*" required><br>
-      <input type="text" name="location" placeholder="Enter location (optional)">
-      <button type="submit">Scan</button>
+<div class="scan-section">
+    <h3>📸 Scan Leaf for Disease</h3>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data" action="{{ url_for('scan') }}">
+        <div class="upload-section">
+            <!-- Upload Box -->
+            <label class="file-upload-box">
+                📁 Click to Upload
+                <input type="file" name="image" accept="image/*" required>
+            </label>
+
+            <!-- Take Photo Box -->
+            <div class="file-upload-box" onclick="startCamera()">
+                📸 Take Photo
+            </div>
+        </div>
+
+        <input type="text" name="location" placeholder="Enter location (optional)">
+        <br><br>
+        <button class="btn" type="submit">Scan Now</button>
     </form>
-  </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraArea" class="hidden">
+        <video id="video" autoplay></video><br>
+        <button class="btn" onclick="capturePhoto()">📸 Capture</button>
+        <canvas id="canvas" class="hidden"></canvas>
+        <form id="cameraForm" method="POST" enctype="multipart/form-data" action="{{ url_for('scan') }}">
+            <input type="hidden" name="location" id="gpsLocation">
+            <input type="file" name="image" id="capturedImage" hidden>
+        </form>
+    </div>
+</div>
+
+<!-- ✅ Recent Scans Section -->
+<h3>🖼️ Recent Scans</h3>
+<div class="scans">
+    {% for scan in scans %}
+        <div class="scan-card">
+            <img src="{{ scan[0] }}" alt="Scan Image" width="150">
+            <p><strong>{{ scan[1] }}</strong></p>
+            <small>{{ scan[3] }}</small>
+        </div>
+    {% else %}
+        <p>No recent scans yet.</p>
+    {% endfor %}
+</div>
+
+<script>
+    function startCamera() {
+        document.getElementById('cameraArea').classList.remove("hidden");
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => { document.getElementById('video').srcObject = stream; })
+            .catch((err) => alert("Error accessing camera: " + err));
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            const file = new File([blob], "captured.jpg", { type: "image/jpeg" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            document.getElementById('capturedImage').files = dataTransfer.files;
+            document.getElementById('cameraForm').submit();
+        }, "image/jpeg");
+    }
+</script>
+
+<style>
+    .upload-section {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 20px 0;
+    }
+    .file-upload-box {
+        width: 45%;
+        aspect-ratio: 1 / 1;
+        border: 2px dashed #aaa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 18px;
+        background: #f8f8f8;
+    }
+    .btn { background: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+    .hidden { display: none; }
+</style>
+
 
   <!-- Recent Scans -->
   <div class="card">
