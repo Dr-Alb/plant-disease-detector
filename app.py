@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 import requests
 from flask import jsonify
+import threading, time
 
 
 # ──────────────────────────────
@@ -505,16 +506,17 @@ def alerts():
         flash("Task scheduled successfully!")
 
     # Auto-update expired alerts
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now()
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
-        c.execute("UPDATE alerts SET status='done' WHERE alert_time < ? AND status='pending'", (now,))
-        conn.commit()
+        c.execute("SELECT id, alert_time FROM alerts WHERE status='pending'")
+        rows = c.fetchall()
 
-        # Fetch all alerts for the user
-        c.execute("SELECT task, alert_time, status FROM alerts WHERE user_id=? ORDER BY alert_time ASC", (user_id,))
-        alerts = c.fetchall()
-
+        for alert_id, alert_time in rows:
+            alert_dt = datetime.strptime(alert_time, "%Y-%m-%dT%H:%M")  # Convert stored string to datetime
+            if alert_dt < now:
+               c.execute("UPDATE alerts SET status='done' WHERE id=?", (alert_id,))
+    conn.commit()
     return render_template("alerts.html", alerts=alerts)
 
 
@@ -543,7 +545,26 @@ def chat():
 def quick_actions():
     return render_template("quick_actions.html")
 
+# Background Alert Checker
+def alert_checker():
+    while True:
+        now = datetime.now()
+        with sqlite3.connect("database.db") as conn:
+            c = conn.cursor()
+            c.execute("SELECT id, task, alert_time, phone FROM alerts WHERE status='pending'")
+            alerts = c.fetchall()
 
+            for alert_id, task, alert_time, phone in alerts:
+                alert_dt = datetime.strptime(alert_time, "%Y-%m-%dT%H:%M")
+                if alert_dt <= now:
+                    c.execute("UPDATE alerts SET status='done' WHERE id=?", (alert_id,))
+                    conn.commit()
+                    if phone:
+                        send_sms(phone, f" Reminder: '{task}' is now due!")
+        time.sleep(60)  # Check every minute
+
+
+threading.Thread(target=alert_checker, daemon=True).start()
 
 # ──────────────────────────────
 # RUN
