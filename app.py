@@ -32,7 +32,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 TWILIO_SID = "your_twilio_sid"
 TWILIO_TOKEN = "your_twilio_token"
 TWILIO_FROM = "your_twilio_number"
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 WEATHER_API_KEY = "8c4e262af8008f51fe6b0d0565ba26fd"
 
 # Load TFLite model
