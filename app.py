@@ -386,7 +386,12 @@ def scan():
         file.save(filepath)
 
         # Make prediction
-        disease_info = predict_image(filepath)
+        try:
+            disease_info = predict_image(filepath)
+        except Exception as e:
+            print("Prediction Error:", e)
+            return "Prediction Failed", 500
+
 
         # Get GPS/location 
         location = request.form.get('location', 'Unknown')
@@ -411,7 +416,7 @@ def scan():
         # Send SMS alert
         if phone:
             message = f"🌿 Disease Detected: {disease_info['name']}\n💡 Solution: {disease_info['solution']['treatement']}"
-            send_sms(phone, message)
+            send_sms(phone_number, message)
 
         # Return result page
         return render_template("scan.html",

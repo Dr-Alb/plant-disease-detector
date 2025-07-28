@@ -105,7 +105,10 @@
 
     <script>
         function startCamera() {
-            document.getElementById('cameraArea').classList.remove("hidden");
+            const cameraArea=document.getElementById('cameraArea')
+            cameraArea.classList.remove("hidden");
+            console.log("Camera area shown");
+
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then((stream) => { document.getElementById('video').srcObject = stream; })
                 .catch((err) => alert("Error accessing camera: " + err));
