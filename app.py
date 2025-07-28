@@ -565,7 +565,7 @@ def favicon():
 def chat():
     user_message = request.json.get("message")
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are AgriBot, a helpful assistant for farmers."},
