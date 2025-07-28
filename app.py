@@ -221,13 +221,30 @@ def predict_image(image_path):
     output = interpreter.get_tensor(output_index)
 
     prediction_idx = int(np.argmax(output))
+    confidence = float(np.max(output))  #  Confidence score
     class_name = CLASS_NAMES[prediction_idx]
-    solution = SOLUTION_MAP.get(class_name, "No solution available.")
+
+    # Extract plant type from label (before the "___")
+    plant_type = class_name.split("___")[0]
+
+    #  Error handling: Low confidence or unknown plant
+    if confidence < 0.70:  # Threshold can be adjusted
+        raise ValueError(" Unable to confidently identify this plant. Please upload a clearer leaf image.")
+
+    #  Error handling: Unsupported plant type
+    supported_plants = set([label.split("___")[0] for label in CLASS_NAMES])
+    if plant_type not in supported_plants:
+        raise ValueError(f" This plant type ('{plant_type}') is not supported by the model.")
+
+    solution = SOLUTION_MAP.get(class_name, {"description": "No info", "treatment": "No solution available."})
 
     return {
         "name": class_name,
+        "plant": plant_type,
+        "confidence": round(confidence * 100, 2),
         "solution": solution
     }
+
 
 def get_weather(lat, lon):
     try:
@@ -394,6 +411,7 @@ def scan():
 
             # Make prediction
             disease_info = predict_image(filepath)
+        
             print(f"DEBUG: Prediction result: {disease_info}")
 
             # Get GPS/location 
@@ -418,10 +436,14 @@ def scan():
             print("DEBUG: Scan inserted into database")
             conn.close()
             return jsonify({
-                "image": filepath,
-                "disease": disease_info["name"],
-                "solution": disease_info["solution"]["treatment"]
-         })
+                "image": f"/{filepath}",
+            "disease": disease_info["name"],
+            "plant": disease_info["plant"],
+            "confidence": f"{disease_info['confidence']}%",
+            "solution": disease_info["solution"]["treatment"]
+               }
+        except ValueError as e:
+            return {"error": str(e)}, 400  )
 
             # Send SMS alert
             if phone:
@@ -437,7 +459,7 @@ def scan():
             )
 
         except Exception as e:
-            print("❌ ERROR in /scan:", str(e))
+            print(" ERROR in /scan:", str(e))
             return f"Internal Server Error: {str(e)}", 500
 
     return render_template("scan.html")
