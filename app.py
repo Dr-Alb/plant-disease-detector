@@ -475,39 +475,48 @@ def recent_scans():
         scans = c.fetchall()
     return render_template("recent_scans.html", scans=scans)
 
+from datetime import datetime
+
 @app.route('/alerts', methods=["GET", "POST"])
 def alerts():
     if "user_id" not in session:
         return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
     if request.method == "POST":
-        phone = request.form["phone"]
+        # Get form data
         task = request.form["task"]
         time = request.form["time"]
-        user_id = session["user_id"]
+        phone = request.form.get("phone", "")
 
-        message = f"🌱 AgriScan Alert: You scheduled '{task}' at {time}."
+        # Insert task into DB
         with sqlite3.connect("database.db") as conn:
             c = conn.cursor()
-            c.execute("INSERT INTO alerts (user_id, task, alert_time,status,phone) VALUES (?, ?, ?,?, ?)",
+            c.execute("INSERT INTO alerts (user_id, task, alert_time, status, phone) VALUES (?, ?, ?, ?, ?)",
                       (user_id, task, time, "pending", phone))
             conn.commit()
 
-        send_sms(phone, message)
-        flash("Alert scheduled successfully!")
-        # Auto-update status for expired alerts
+        # Send SMS (optional)
+        if phone:
+            message = f" AgriScan Alert: '{task}' is scheduled at {time}."
+            send_sms(phone, message)
+
+        flash("Task scheduled successfully!")
+
+    # Auto-update expired alerts
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     with sqlite3.connect("database.db") as conn:
         c = conn.cursor()
         c.execute("UPDATE alerts SET status='done' WHERE alert_time < ? AND status='pending'", (now,))
         conn.commit()
-    # Fetch alerts for the user
-    user_id = session["user_id"]
-    with sqlite3.connect("database.db") as conn:
-        c = conn.cursor()
-        c.execute("SELECT task, alert_time status FROM alerts WHERE user_id=?", (user_id,))
+
+        # Fetch all alerts for the user
+        c.execute("SELECT task, alert_time, status FROM alerts WHERE user_id=? ORDER BY alert_time ASC", (user_id,))
         alerts = c.fetchall()
 
     return render_template("alerts.html", alerts=alerts)
+
 
 @app.route('/favicon.ico')
 def favicon():
