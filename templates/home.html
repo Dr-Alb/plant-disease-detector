@@ -245,17 +245,30 @@ input[type="file"] {
 
 <!-- Scripts -->
 <script>
-  // Get user location
-  fetch('/get-location')
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('gps-location').textContent =
-        `Lat: ${data.lat}, Lng: ${data.lng}`;
-    })
-    .catch(() => {
-      document.getElementById('gps-location').textContent = "Unavailable";
-    });
+ function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(sendLocation, showError);
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+}
 
+function sendLocation(position) {
+    fetch("/save-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+        })
+    });
+}
+
+function showError(error) {
+    alert("Unable to get location: " + error.message);
+}
+
+window.onload = getLocation; 
   // Toggle Chat
   const chatBtn = document.getElementById("chat-btn");
   const chatBox = document.getElementById("chat-box");

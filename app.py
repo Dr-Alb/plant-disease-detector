@@ -350,8 +350,10 @@ def index():
             username = email = "Unknown"
 
     # Get location and weather
-    latlng = get_gps_location()
-    weather = get_weather(latlng[0], latlng[1])
+    lat = session.get("lat", default_lat)
+    lon = session.get("lon", default_lon)
+    weather = get_weather(lat, lon)
+
 
     # Fetch recent scans – 
     with sqlite3.connect("database.db") as conn:
@@ -386,6 +388,23 @@ def profile():
 def get_location():
     latlng = get_gps_location()
     return {"lat": latlng[0], "lng": latlng[1]}
+
+@app.route('/save-location', methods=['POST'])
+def save_location():
+    try:
+        data = request.get_json()
+        lat = data.get('lat')
+        lon = data.get('lon')
+
+        if lat and lon:
+            session['lat'] = lat
+            session['lon'] = lon
+            return {"status": "success", "message": "Location saved"}
+        else:
+            return {"status": "error", "message": "Invalid location data"}, 400
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
