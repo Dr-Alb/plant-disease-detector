@@ -330,6 +330,8 @@ def send_sms(to, message):
     except Exception as e:
         print(f" SMS failed: {e}")
 
+    default_lat = -1.2921  
+    default_lon = 36.8219  
 # ──────────────────────────────
 # ROUTES
 # ──────────────────────────────
