@@ -19,6 +19,8 @@ from openai import OpenAI
 from datetime import timedelta
 from functools import wraps
 from flask import session, redirect, url_for
+default_lat = -1.2921  
+default_lon = 36.8219  
 
 client = OpenAI()
 
@@ -330,8 +332,7 @@ def send_sms(to, message):
     except Exception as e:
         print(f" SMS failed: {e}")
 
-    default_lat = -1.2921  
-    default_lon = 36.8219  
+    
 # ──────────────────────────────
 # ROUTES
 # ──────────────────────────────
