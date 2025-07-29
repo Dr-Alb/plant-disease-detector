@@ -16,6 +16,10 @@ import threading, time
 from apscheduler.schedulers.background import BackgroundScheduler
 import sqlite3
 from openai import OpenAI
+from datetime import timedelta
+from functools import wraps
+from flask import session, redirect, url_for
+
 client = OpenAI()
 
 
@@ -24,6 +28,7 @@ client = OpenAI()
 # ──────────────────────────────
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -39,6 +44,12 @@ WEATHER_API_KEY = "8c4e262af8008f51fe6b0d0565ba26fd"
 MODEL_PATH = "model.tflite"
 interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
+
+@app.before_request
+def require_login():
+    allowed_routes = ['login', 'signup', 'static']  
+    if request.endpoint not in allowed_routes and "user_id" not in session:
+        return redirect(url_for("signup")) 
 
 # Class labels and solution map
 CLASS_NAMES = [
@@ -275,6 +286,15 @@ def get_gps_location():
 
 scheduler = BackgroundScheduler()
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def send_due_alerts():
     """Check DB for due alerts and send SMS automatically."""
     now = datetime.now()
@@ -314,6 +334,7 @@ def send_sms(to, message):
 # ROUTES
 # ──────────────────────────────
 @app.route('/')
+@login_required
 def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
