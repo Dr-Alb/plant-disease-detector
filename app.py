@@ -250,10 +250,6 @@ def predict_image(image_path):
     # Extract plant type from label (before the "___")
     plant_type = class_name.split("___")[0]
 
-    #  Error handling: Low confidence or unknown plant
-    if confidence < 0.40:  
-        raise ValueError(" Unable to confidently identify this plant. Please upload a clearer leaf image.")
-
     #  Error handling: Unsupported plant type
     supported_plants = set([label.split("___")[0] for label in CLASS_NAMES])
     if plant_type not in supported_plants:
