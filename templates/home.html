@@ -111,6 +111,20 @@ document.querySelector('input[name="image"]').addEventListener('change', functio
         }
     });
 });
+function startCamera() {
+        const video = document.getElementById('video');
+        const cameraArea = document.getElementById('cameraArea');
+        cameraArea.classList.remove("hidden");
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                alert("Camera access denied: " + err);
+            });
+    }
+
 
 function capturePhoto() {
     const canvas = document.getElementById('canvas');
