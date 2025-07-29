@@ -230,7 +230,7 @@ SOLUTION_MAP = {
 # HELPERS
 # ──────────────────────────────
 def predict_image(image_path):
-    img = Image.open(image_path).resize((224, 224))
+    img = Image.open(image_path).convert("RGB").resize((224, 224))
     input_array = np.expand_dims(np.array(img) / 255.0, axis=0).astype(np.float32)
 
     input_index = interpreter.get_input_details()[0]["index"]
@@ -240,15 +240,18 @@ def predict_image(image_path):
     interpreter.invoke()
     output = interpreter.get_tensor(output_index)
 
+    if len(output.shape) > 1:
+        output = output[0]
+
     prediction_idx = int(np.argmax(output))
-    confidence = float(np.max(output))  #  Confidence score
+    confidence = float(np.max(output))  
     class_name = CLASS_NAMES[prediction_idx]
 
     # Extract plant type from label (before the "___")
     plant_type = class_name.split("___")[0]
 
     #  Error handling: Low confidence or unknown plant
-    if confidence < 0.70:  # Threshold can be adjusted
+    if confidence < 0.40:  
         raise ValueError(" Unable to confidently identify this plant. Please upload a clearer leaf image.")
 
     #  Error handling: Unsupported plant type
