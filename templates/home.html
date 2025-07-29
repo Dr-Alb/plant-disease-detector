@@ -95,12 +95,12 @@ document.querySelector('input[name="image"]').addEventListener('change', functio
     e.preventDefault();
     const formData = new FormData(document.getElementById('uploadForm'));
 
-    showSpinner(); // Show spinner
+    showSpinner();
 
     fetch('/scan', { method: 'POST', body: formData })
     .then(res => res.json())
     .then(data => {
-        hideSpinner(); // Hide spinner
+        hideSpinner(); 
         if (data.error) {
             alert(data.error);
         } else {
@@ -139,12 +139,12 @@ function capturePhoto() {
         const formData = new FormData();
         formData.append('image', new File([blob], "captured.jpg", { type: "image/jpeg" }));
 
-        showSpinner(); // Show spinner
+        showSpinner(); 
 
         fetch('/scan', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            hideSpinner(); // Hide spinner
+            hideSpinner(); 
             if (!data.error) {
                 document.getElementById('result-section').style.display = 'block';
                 document.getElementById('result-image').src = data.image;
@@ -235,7 +235,7 @@ input[type="file"] {
 
   <!-- Quick Actions -->
   <div class="card">
-    <h3>⚡ Quick Actions</h3>
+    <h3> Quick Actions</h3>
     <div class="quick-grid">
       <a href="{{ url_for('alerts') }}" class="quick-action">📅 Schedule</a>
       <a href="{{ url_for('recent_scans') }}" class="quick-action">📊 Reports</a>
